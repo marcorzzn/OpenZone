@@ -1,0 +1,58 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.pytest-tmp/
+# La directory temporanea di pytest finisce nella radice del progetto quando TMPDIR
+# non è assoluto (per esempio dentro un sandbox): non va versionata.
+/pytest-of-*/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Ambienti virtuali
+.venv/
+venv/
+env/
+ENV/
+
+# Warehouse locale e cache su disco
+# (ancorati alla radice: due punti senza slash ignorerebbero anche openzone/warehouse/)
+/data/
+/warehouse/
+*.duckdb
+*.duckdb.wal
+.openzone_cache/
+
+# Output di analisi e report generati
+/output/
+/reports/
+/figures/
+*.png
+*.pdf
+!docs/**/*.png
+
+# Segreti e credenziali (chiavi API football-data.org, ecc.)
+.env
+.env.*
+secrets.toml
+config.local.toml
+
+# Artefatti DSH / report di diagnostica locali
+*-acl-reports/
+/.selfcheck-scratch/
+
+# Editor e OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

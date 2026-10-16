@@ -1,0 +1,246 @@
+# Definizioni Opta: tipi evento e qualificatori
+#
+# ATTENZIONE — documento incompleto e non verificato.
+#
+# I type_id qui elencati sono quelli ricorrenti nella documentazione pubblica e nei
+# feed Opta (F24) e corrispondono all'uso più diffuso, ma NON sono stati confrontati
+# con il documento ufficiale: il campo `verified` è false per ogni voce.
+#
+# Le mappature vanno completate leggendo:
+#   https://www.statsperform.com/opta-event-definitions/
+#
+# Regola di lavoro: nessuna voce entra in questo file "per sentito dire". Se non è
+# verificata sulla fonte primaria, resta fuori dal calcolo e l'evento viene trattato
+# come sconosciuto, con un warning. Meglio un buco dichiarato che un numero sbagliato.
+#
+# I qualificatori sono volutamente quasi vuoti: gli id di qualificatore sono la parte
+# più fragile della documentazione pubblica e un errore qui si propaga silenziosamente
+# in tutte le metriche derivate. Vanno compilati dalla fonte ufficiale, un blocco per
+# volta, con un test che ne verifichi la coerenza sui dati reali.
+
+schema_version: 1
+updated: "2026-10-16"
+status: incomplete_draft
+verified: false
+verify_against: "https://www.statsperform.com/opta-event-definitions/"
+coordinate_system:
+  pitch_size: [100, 100]
+  origin: "in alto a sinistra, y crescente verso il basso"
+  direction: "x crescente verso la porta avversaria"
+  notes: >
+    Opta usa un campo normalizzato 100x100. Attenzione: la prima metà della partita
+    e la seconda possono presentare la stessa squadra con orientamenti diversi a
+    seconda del feed: la normalizzazione dell'orientamento è responsabilità del
+    modulo openzone.standardize.
+
+event_types:
+  1:
+    name: "Pass"
+    family: "pass"
+    verified: false
+  2:
+    name: "Offside Pass"
+    family: "pass"
+    verified: false
+  3:
+    name: "Take On"
+    family: "dribble"
+    verified: false
+  4:
+    name: "Foul"
+    family: "foul"
+    verified: false
+  5:
+    name: "Out"
+    family: "dead_ball"
+    verified: false
+  6:
+    name: "Corner Awarded"
+    family: "dead_ball"
+    verified: false
+  7:
+    name: "Tackle"
+    family: "defensive"
+    verified: false
+  8:
+    name: "Interception"
+    family: "defensive"
+    verified: false
+  9:
+    name: "Turnover"
+    family: "possession"
+    verified: false
+  10:
+    name: "Save"
+    family: "goalkeeping"
+    verified: false
+  11:
+    name: "Claim"
+    family: "goalkeeping"
+    verified: false
+  12:
+    name: "Clearance"
+    family: "defensive"
+    verified: false
+  13:
+    name: "Miss"
+    family: "shot"
+    is_shot: true
+    verified: false
+  14:
+    name: "Post"
+    family: "shot"
+    is_shot: true
+    verified: false
+  15:
+    name: "Attempt Saved"
+    family: "shot"
+    is_shot: true
+    verified: false
+  16:
+    name: "Goal"
+    family: "shot"
+    is_shot: true
+    is_goal: true
+    verified: false
+  17:
+    name: "Card"
+    family: "discipline"
+    verified: false
+  18:
+    name: "Player Off"
+    family: "lineup"
+    verified: false
+  19:
+    name: "Player On"
+    family: "lineup"
+    verified: false
+  20:
+    name: "Player Retired"
+    family: "lineup"
+    verified: false
+  21:
+    name: "Player Returns"
+    family: "lineup"
+    verified: false
+  22:
+    name: "Player Becomes Goalkeeper"
+    family: "lineup"
+    verified: false
+  23:
+    name: "Goalkeeper Becomes Player"
+    family: "lineup"
+    verified: false
+  24:
+    name: "Condition Change"
+    family: "match_state"
+    verified: false
+  25:
+    name: "Official Change"
+    family: "match_state"
+    verified: false
+  27:
+    name: "Start Delay"
+    family: "match_state"
+    verified: false
+  28:
+    name: "End Delay"
+    family: "match_state"
+    verified: false
+  30:
+    name: "End"
+    family: "match_state"
+    verified: false
+  32:
+    name: "Start"
+    family: "match_state"
+    verified: false
+  34:
+    name: "Team Set Up"
+    family: "lineup"
+    verified: false
+  35:
+    name: "Player Changed Position"
+    family: "lineup"
+    verified: false
+  36:
+    name: "Player Changed Jersey Number"
+    family: "lineup"
+    verified: false
+  37:
+    name: "Collection End"
+    family: "match_state"
+    verified: false
+  38:
+    name: "Temp Goal"
+    family: "match_state"
+    verified: false
+  39:
+    name: "Temp Attempt"
+    family: "match_state"
+    verified: false
+  40:
+    name: "Formation Change"
+    family: "lineup"
+    verified: false
+  41:
+    name: "Punch"
+    family: "goalkeeping"
+    verified: false
+  42:
+    name: "Good Skill"
+    family: "dribble"
+    verified: false
+  43:
+    name: "Deleted Event"
+    family: "match_state"
+    verified: false
+  44:
+    name: "Aerial"
+    family: "duel"
+    verified: false
+  45:
+    name: "Challenge"
+    family: "duel"
+    verified: false
+  46:
+    name: "Recovery"
+    family: "defensive"
+    verified: false
+  47:
+    name: "Post Match"
+    family: "match_state"
+    verified: false
+  48:
+    name: "Diary"
+    family: "match_state"
+    verified: false
+
+# Id di qualificatore. Compilare dalla fonte ufficiale.
+#
+# Forma attesa di ogni voce:
+#   <qualifier_id>:
+#     name: "Nome ufficiale"
+#     family: "pass_type" | "body_part" | "set_piece" | "shot_type" | "position" | ...
+#     verified: false
+#     notes: "Come si comporta quando è assente"
+qualifiers:
+  140:
+    name: "Pass End X"
+    family: "position"
+    verified: false
+    notes: >
+      Coordinata x di arrivo del passaggio. Senza questo qualificatore un passaggio
+      non ha punto di arrivo e le metriche di progressione non sono calcolabili:
+      va trattato come dato mancante, mai come zero.
+  141:
+    name: "Pass End Y"
+    family: "position"
+    verified: false
+    notes: "Coordinata y di arrivo del passaggio. Vale la stessa avvertenza di 140."
+
+todo:
+  - "Verificare ogni type_id sul documento ufficiale e portare `verified` a true."
+  - "Compilare i qualificatori di tipo di passaggio, parte del corpo e palla inattiva."
+  - "Aggiungere i qualificatori di coordinata di arrivo per tiri e conduzioni."
+  - "Aggiungere un test che confronti questa mappa con i type_id osservati nei dati reali."

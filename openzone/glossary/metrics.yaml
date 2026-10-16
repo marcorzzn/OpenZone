@@ -1,0 +1,380 @@
+# Glossario delle metriche di OpenZone
+#
+# Ogni metrica ha una scheda con: definizione, formula, unità, fonte originale,
+# generazione di appartenenza e stato di implementazione nella libreria.
+#
+# ATTENZIONE — documento bozza. Le definizioni qui riportate sono formulazioni
+# divulgative, non le specifiche ufficiali dei provider. Prima di pubblicare una
+# metrica in un report, verifica la definizione sulla fonte primaria indicata in
+# `verify_against`. In particolare la metrica IPO è proprietaria: OpenZone non la
+# calcola e non ne ridistribuisce la formula.
+#
+# Valori ammessi per `computable`:
+#   yes      -> OpenZone la calcola da dati evento/tracking standard
+#   partial  -> calcolabile solo con dati aggiuntivi o con assunzioni documentate
+#   external -> non calcolabile: definizione proprietaria o dato non disponibile
+
+schema_version: 1
+updated: "2026-10-16"
+status: draft
+verified: false
+verify_against: "https://www.statsperform.com/opta-event-definitions/"
+
+generations:
+  1:
+    name: "Metriche descrittive di base"
+    description: >
+      Conteggi e percentuali ricavabili direttamente dagli eventi, senza modello
+      probabilistico: gol, assist, tiri, possesso, key passes.
+  2:
+    name: "Metriche di qualità dell'evento"
+    description: >
+      Modelli probabilistici che stimano il valore di un singolo evento nel momento
+      in cui avviene: xG, xA, xGOT, big chances.
+  3:
+    name: "Metriche di valore, pressing e spazio"
+    description: >
+      Metriche che valutano azioni in sequenza e il contesto spaziale: xT, VAEP,
+      PPDA, progressive passes/carries, packing, pitch control.
+
+metrics:
+
+  goals:
+    name: "Gol"
+    aliases: ["goals", "gol"]
+    generation: 1
+    family: "shooting"
+    definition: >
+      Numero di tiri che hanno superato la linea di porta senza infrazione
+      precedente. Negli eventi Opta corrisponde al tipo evento 16 (Goal).
+    formula: "count(eventi con type_id = 16)"
+    unit: "conteggio"
+    source: ["opta"]
+    computable: "yes"
+    compute_with: "openzone.metrics.basic.goals"
+    notes: >
+      Gli autogol vanno attribuiti con cautela: non sono tiri del giocatore a cui
+      vengono addebitati e alcuni provider li escludono dai conteggi individuali.
+
+  assists:
+    name: "Assist"
+    aliases: ["assist"]
+    generation: 1
+    family: "creation"
+    definition: >
+      Passaggio deliberato che porta direttamente a un gol, secondo i criteri della
+      fonte. I provider divergono su deviazioni, pali e ribattute del portiere.
+    formula: "count(passaggi con qualificatore assist su un gol)"
+    unit: "conteggio"
+    source: ["opta"]
+    computable: "yes"
+    compute_with: "openzone.metrics.basic.assists"
+    notes: >
+      La definizione di assist non è universale: due provider possono attribuire lo
+      stesso gol a giocatori diversi. La scheda della fonte va citata nel report.
+
+  shots:
+    name: "Tiri"
+    aliases: ["shots", "tiri"]
+    generation: 1
+    family: "shooting"
+    definition: >
+      Tentativi di segnare, inclusi quelli bloccati, respinti, a lato, sul palo e
+      trasformati in gol.
+    formula: "count(eventi con type_id in (13, 14, 15, 16))"
+    unit: "conteggio"
+    source: ["opta"]
+    computable: "yes"
+    compute_with: "openzone.metrics.basic.shots"
+    notes: >
+      Il conteggio dipende da come la fonte registra i tiri bloccati: in alcuni feed
+      sono eventi a sé stanti, in altri confluiscono nei tentativi a lato. Da
+      verificare sul feed specifico prima di confrontare due fonti.
+
+  possession:
+    name: "Possesso"
+    aliases: ["possession", "possesso"]
+    generation: 1
+    family: "possession"
+    definition: >
+      Quota di tempo o di eventi attribuita a ciascuna squadra. Non esiste una
+      definizione unica: si può calcolare sul tempo effettivo, sul numero di
+      passaggi o sul numero di eventi.
+    formula: "eventi_squadra / eventi_totali  (oppure tempo_squadra / tempo_totale)"
+    unit: "percentuale"
+    range: [0, 100]
+    source: ["opta"]
+    computable: "yes"
+    compute_with: "openzone.metrics.basic.possession"
+    notes: >
+      Il valore dipende dalla convenzione scelta: OpenZone documenta sempre la base
+      di calcolo insieme al numero, perché il confronto fra fonti diverse è altrimenti
+      privo di senso.
+
+  key_passes:
+    name: "Key passes"
+    aliases: ["key_passes", "passaggi_chiave"]
+    generation: 1
+    family: "creation"
+    definition: >
+      Passaggio che genera un tiro, indipendentemente dall'esito del tiro stesso.
+    formula: "count(passaggi seguiti da un tiro entro la stessa azione)"
+    unit: "conteggio"
+    source: ["opta"]
+    computable: "yes"
+    compute_with: "openzone.metrics.basic.key_passes"
+    notes: >
+      Richiede una definizione esplicita di "stessa azione" (possesso): è il
+      parametro che fa divergere i conteggi fra provider.
+
+  xg:
+    name: "Expected Goals"
+    aliases: ["xg", "expected_goals", "gol_attesi"]
+    generation: 2
+    family: "shooting"
+    definition: >
+      Probabilità che un tiro diventi gol, stimata da un modello addestrato su tiri
+      storici e basato su posizione, tipo di tiro, parte del corpo, pressione e
+      contesto dell'azione.
+    formula: >
+      Modello probabilistico P(gol | features del tiro). Non esiste una formula
+      chiusa: ogni provider pubblica il proprio modello e i propri coefficienti.
+    unit: "probabilità"
+    range: [0, 1]
+    source: ["opta", "understat"]
+    computable: partial
+    compute_with: "openzone.metrics.advanced.compute_xg"
+    notes: >
+      L'xG di Opta, Understat e StatsBomb non è confrontabile: modelli diversi
+      addestrati su dati diversi. Un xG "proprio" richiede un training set
+      etichettato e una validazione out-of-sample, quindi OpenZone espone sia il
+      modello proprio sia il valore già fornito dalla fonte, tenendoli distinti in
+      colonne separate.
+    references:
+      - "https://www.pythonfootball.com/ (quale modello xG scegliere)"
+
+  xa:
+    name: "Expected Assists"
+    aliases: ["xa", "expected_assists"]
+    generation: 2
+    family: "creation"
+    definition: >
+      Somma degli xG dei tiri generati dai passaggi di un giocatore: stima la
+      probabilità che un passaggio diventi un assist.
+    formula: "xA(passaggio) = xG(tiro generato dal passaggio); xA(giocatore) = somma"
+    unit: "probabilità cumulata"
+    range: [0, inf]
+    source: ["opta"]
+    computable: partial
+    compute_with: "openzone.metrics.advanced.compute_xa"
+    notes: >
+      Dipende interamente dal modello xG usato: dichiarare quale. A differenza
+      dell'assist, l'xA non richiede che il tiro sia gol, quindi ha meno varianza.
+
+  xgot:
+    name: "Expected Goals on Target"
+    aliases: ["xgot", "expected_goals_on_target"]
+    generation: 2
+    family: "shooting"
+    definition: >
+      Probabilità che un tiro diventi gol condizionata al fatto che il tiro sia
+      nello specchio della porta, incorporando la posizione finale del pallone
+      (dove è diretto il tiro) e non solo il punto di partenza.
+    formula: "P(gol | tiro nello specchio, posizione del pallone al momento del tiro)"
+    unit: "probabilità"
+    range: [0, 1]
+    source: ["opta"]
+    computable: partial
+    compute_with: "openzone.metrics.advanced.compute_xgot"
+    notes: >
+      Richiede dati post-shot (coordinate del pallone all'ingresso in porta), che
+      Understat e StatsBomb Open Data non espongono nel formato richiesto. Senza
+      quei dati la metrica non è calcolabile: OpenZone solleva un errore esplicito
+      invece di restituire un'approssimazione silenziosa.
+
+  ipo:
+    name: "Indice di Pericolosità Offensiva"
+    aliases: ["ipo"]
+    generation: 2
+    family: "shooting"
+    definition: >
+      Indice composito di pericolosità offensiva diffuso in Italia (SICS /
+      Coverciano), pensato per pesare la qualità delle occasioni create.
+    formula: "NON DISPONIBILE — formula proprietaria, non pubblicata."
+    unit: "indice"
+    source: ["sics_coverciano"]
+    computable: external
+    compute_with: null
+    notes: >
+      La formula è proprietaria di SICS/Coverciano e non è pubblica: OpenZone non la
+      reimplementa e non la ridistribuisce. Questa scheda esiste per documentare
+      perché la metrica non è disponibile e per importare valori calcolati altrove,
+      se l'utente ne ha i diritti, tramite la tabella delle metriche esterne.
+
+  big_chances:
+    name: "Big Chances"
+    aliases: ["big_chances", "occasioni_chiare"]
+    generation: 2
+    family: "shooting"
+    definition: >
+      Occasione in cui un giocatore è ragionevolmente atteso a segnare, tipicamente
+      in situazione di uno contro uno con il portiere o a distanza ravvicinata con
+      porta libera.
+    formula: "classificazione euristica dell'occasione secondo la definizione della fonte"
+    unit: "conteggio"
+    source: ["opta"]
+    computable: partial
+    compute_with: "openzone.metrics.advanced.big_chances"
+    notes: >
+      Definizione euristica, non probabilistica, e non pubblicata in dettaglio: la
+      reimplementazione può solo approssimarla. Il valore va trattato come
+      indicativo e documentato come tale.
+
+  xt:
+    name: "Expected Threat"
+    aliases: ["xt", "expected_threat", "threat"]
+    generation: 3
+    family: "value"
+    definition: >
+      Valore atteso di una posizione del pallone sul campo, inteso come probabilità
+      che il possesso in quella zona produca un gol entro un numero limitato di
+      azioni.
+    formula: >
+      Griglia discreta sulle coordinate del campo. Per ogni cella:
+      xT(x, y) = s(x, y) * g + m(x, y) * somma[ T(x, y -> x', y') * xT(x', y') ],
+      dove s è la probabilità di tirare dalla cella, g la probabilità di segnare,
+      m la probabilità di muovere il pallone e T la matrice di transizione fra celle.
+    unit: "probabilità"
+    range: [0, 1]
+    source: ["karun_singh"]
+    computable: "yes"
+    compute_with: "openzone.metrics.predictive.compute_xt"
+    notes: >
+      Il valore assoluto dipende dalla griglia (dimensioni e risoluzione) e dal
+      dataset di addestramento. Due implementazioni con griglie diverse non sono
+      confrontabili: OpenZone salva la griglia usata insieme ai valori.
+    references:
+      - "Karun Singh, Introducing Expected Threat (xT)"
+
+  vaep:
+    name: "VAEP"
+    aliases: ["vaep"]
+    generation: 3
+    family: "value"
+    definition: >
+      Valuing Actions by Estimating Probabilities: valore di un'azione come
+      variazione della probabilità di segnare meno la variazione della probabilità
+      di subire, entro una finestra di azioni successive.
+    formula: "VAEP(azione) = ΔP(segnare) - ΔP(subire)"
+    unit: "probabilità"
+    source: ["socceraction"]
+    computable: "yes"
+    compute_with: "openzone.metrics.socceraction.vaep"
+    notes: >
+      Richiede la conversione degli eventi in SPADL. Il valore dipende dal modello
+      addestrato: OpenZone usa i modelli forniti da socceraction e ne documenta la
+      provenienza.
+
+  ppda:
+    name: "Passes Per Defensive Action"
+    aliases: ["ppda"]
+    generation: 3
+    family: "pressing"
+    definition: >
+      Intensità del pressing: quanti passaggi avversari sono concessi per ogni
+      azione difensiva. Valori bassi indicano pressing aggressivo.
+    formula: "passaggi avversari nella zona di pressing / azioni difensive nella stessa zona"
+    unit: "rapporto"
+    range: [0, inf]
+    source: ["opta"]
+    computable: "yes"
+    compute_with: "openzone.metrics.predictive.compute_ppda"
+    notes: >
+      Il numero dipende da due parametri che vanno sempre dichiarati: l'estensione
+      della zona di pressing e quali eventi contano come azione difensiva
+      (contrasti, intercettazioni, falli, duelli). OpenZone espone entrambi come
+      argomenti espliciti.
+
+  progressive_passes:
+    name: "Progressive Passes"
+    aliases: ["progressive_passes", "passaggi_progressivi"]
+    generation: 3
+    family: "progression"
+    definition: >
+      Passaggio completato che avanza il pallone verso la porta avversaria in modo
+      sostanziale, superando una soglia di avanzamento rispetto alla partenza.
+    formula: "passaggio completato con avanzamento verso la porta >= soglia (tipicamente 10 m)"
+    unit: "conteggio"
+    source: ["opta"]
+    computable: "yes"
+    compute_with: "openzone.metrics.predictive.progressive_passes"
+    notes: >
+      La soglia non è universale: Opta usa 10 m con criteri aggiuntivi, altre fonti
+      usano 5 m o frazioni di campo. La soglia è un argomento esplicito e va citata
+      nel report.
+
+  progressive_carries:
+    name: "Progressive Carries"
+    aliases: ["progressive_carries", "conduzioni_progressive"]
+    generation: 3
+    family: "progression"
+    definition: >
+      Conduzione palla che avanza il pallone verso la porta avversaria oltre una
+      soglia di avanzamento.
+    formula: "conduzione con avanzamento verso la porta >= soglia"
+    unit: "conteggio"
+    source: ["opta", "statsbomb"]
+    computable: "yes"
+    compute_with: "openzone.metrics.predictive.progressive_carries"
+    notes: >
+      Richiede che la fonte registri le conduzioni come eventi con coordinate di
+      partenza e arrivo: non tutte lo fanno.
+
+  packing:
+    name: "Packing"
+    aliases: ["packing", "superati"]
+    generation: 3
+    family: "progression"
+    definition: >
+      Numero di avversari superati da un passaggio o da una conduzione, cioè di
+      giocatori che erano fra il pallone e la porta e che vengono a trovarsi dietro
+      la linea del pallone dopo l'azione.
+    formula: "count(avversari con x compreso fra la partenza e l'arrivo, nella direzione della porta)"
+    unit: "conteggio"
+    source: ["community"]
+    computable: partial
+    compute_with: "openzone.metrics.predictive.packing"
+    notes: >
+      Richiede le coordinate di tutti i giocatori al momento dell'azione, quindi
+      tracking data o posizioni ricostruite: con event data senza posizioni è solo
+      approssimabile.
+
+  pitch_control:
+    name: "Pitch Control"
+    aliases: ["pitch_control", "controllo_campo"]
+    generation: 3
+    family: "spatial"
+    definition: >
+      Probabilità che una specifica squadra o giocatore controlli il pallone in un
+      punto del campo e in un istante, dato il posizionamento di tutti i giocatori e
+      i loro tempi di arrivo stimati.
+    formula: >
+      Modello di campo di influenza: per ogni punto si confrontano i tempi di arrivo
+      dei giocatori delle due squadre e si convertono in probabilità di controllo.
+    unit: "probabilità"
+    range: [0, 1]
+    source: ["community"]
+    computable: partial
+    compute_with: "openzone.spatial.pitch_control"
+    notes: >
+      Richiede tracking data a frequenza elevata e stime di velocità: con event data
+      si può solo produrre una versione statica e approssimata, da etichettare come
+      tale.
+
+external_metrics:
+  note: >
+    Metriche che OpenZone può importare ma non calcolare. I valori accettati
+    vengono registrati con la fonte e la data di importazione, così restano
+    distinguibili da quelli calcolati localmente.
+  keys:
+    - ipo

@@ -1,0 +1,243 @@
+# Glossario delle fonti dati di OpenZone
+#
+# Ogni fonte ha una scheda con: cosa fornisce, come si accede, licenza, limiti d'uso
+# e l'adapter di OpenZone che la legge.
+#
+# ATTENZIONE — documento bozza. Le licenze qui riportate sono annotazioni di lavoro,
+# non consulenza legale, e vanno verificate alla fonte prima di qualunque uso
+# pubblico o commerciale. Il campo `license_status` indica quanto è solida
+# l'annotazione:
+#   declared    -> la fonte pubblica termini espliciti, da rileggere integralmente
+#   uncertain   -> esistono indicazioni contrastanti o assenti
+#   proprietary -> contenuto proprietario, non ridistribuibile
+#
+# Il campo `redistributable` risponde a una sola domanda: OpenZone può includere
+# questi dati nel repository o in un pacchetto pubblicato? Quando è false, l'adapter
+# scarica al momento dell'uso e non versiona nulla.
+
+schema_version: 1
+updated: "2026-10-16"
+status: draft
+verified: false
+
+sources:
+
+  statsbomb_open_data:
+    name: "StatsBomb Open Data"
+    url: "https://github.com/statsbomb/open-data"
+    kind: "event_data"
+    access: "bulk_download"
+    adapter: "openzone.ingest.statsbomb"
+    license: "StatsBomb Public Data User Agreement (uso non commerciale, attribuzione)"
+    license_status: declared
+    redistributable: false
+    scraping: "consentito dal repository pubblico, non è scraping"
+    coverage: "competizioni selezionate, fra cui la Serie A 2015/16"
+    coordinates: "campo 120x80, origine in basso a sinistra, x verso la porta avversaria"
+    notes: >
+      È la fonte di riferimento per i test: aperta, scaricabile in blocco e con
+      eventi già ricchi di qualificatori. Essendo una sola stagione di Serie A, non
+      basta per un'analisi storica e non va presentata come tale.
+
+  pannadata:
+    name: "pannadata (Opta via Parquet)"
+    url: "https://github.com/peteowen1/pannadata"
+    kind: "event_data"
+    access: "bulk_download"
+    adapter: "openzone.ingest.pannadata"
+    license: "non specificata dal repository"
+    license_status: uncertain
+    redistributable: false
+    scraping: "nessuno: file Parquet già pronti"
+    coverage: "Serie A dal 2013, formato Opta"
+    coordinates: "campo 100x100, stile Opta (x verso la porta, y dall'alto verso il basso)"
+    notes: >
+      Dal punto di vista tecnico è la fonte più ricca per la Serie A: eventi Opta
+      completi di qualificatori e coordinate. Il problema è la licenza, che il
+      repository non chiarisce: i dati Opta sono proprietari. L'adapter funziona su
+      file locali forniti dall'utente e non scarica né versiona nulla; l'uso dei dati
+      resta una responsabilità di chi li possiede. Non usare in un prodotto pubblico
+      senza accordo con il titolare dei diritti.
+
+  understat:
+    name: "Understat"
+    url: "https://understat.com"
+    kind: "event_data"
+    access: "web, tramite soccerdata"
+    adapter: "openzone.ingest.understat"
+    license: "termini del sito"
+    license_status: declared
+    redistributable: false
+    scraping: "effettuato da soccerdata: verificare i termini prima dell'uso"
+    coverage: "principali campionati europei, xG per tiro"
+    coordinates: "campo 100x100 normalizzato"
+    notes: >
+      Utile perché fornisce un xG indipendente per singolo tiro, quindi permette di
+      confrontare il modello proprio con un valore esterno. Non fornisce i
+      passaggi: non basta per metriche di progressione o di possesso.
+
+  fbref:
+    name: "FBref"
+    url: "https://fbref.com"
+    kind: "aggregate_stats"
+    access: "web, tramite soccerdata"
+    adapter: "openzone.ingest.soccerdata"
+    license: "termini del sito (dati in parte forniti da Opta)"
+    license_status: declared
+    redistributable: false
+    scraping: "effettuato da soccerdata: verificare i termini prima dell'uso"
+    coverage: "statistiche aggregate per giocatore e squadra, molte stagioni"
+    coordinates: "non applicabile"
+    notes: >
+      Adatta a contesto e validazione incrociata, non al calcolo di metriche spaziali:
+      non contiene le coordinate dei passaggi.
+
+  whoscored:
+    name: "WhoScored"
+    url: "https://www.whoscored.com"
+    kind: "event_data"
+    access: "web, tramite soccerdata"
+    adapter: "openzone.ingest.whoscored"
+    license: "termini del sito"
+    license_status: declared
+    redistributable: false
+    scraping: "i termini vietano lo scraping: adapter presente, uso a rischio dell'utente"
+    coverage: "eventi con descrizioni testuali, molti campionati"
+    coordinates: "campo 100x100, stile Opta"
+    notes: >
+      Le descrizioni testuali degli eventi sono utili per capire il contesto di
+      un'azione. L'adapter esiste per completezza e per uso su dati già ottenuti
+      legalmente, non come invito allo scraping: OpenZone non include dati WhoScored
+      e non li userà in produzione.
+
+  sofascore:
+    name: "Sofascore"
+    url: "https://www.sofascore.com"
+    kind: "shotmap"
+    access: "web, tramite soccerdata"
+    adapter: "openzone.ingest.soccerdata"
+    license: "termini del sito"
+    license_status: declared
+    redistributable: false
+    scraping: "i termini vietano lo scraping: NON usare in produzione"
+    coverage: "shotmap con coordinate e valori per tiro"
+    coordinates: "campo 100x100 normalizzato"
+    notes: >
+      Sarebbe la fonte più comoda per un confronto su xGOT, perché espone dati
+      post-shot. I termini di servizio vietano però l'accesso programmatico: la
+      scheda resta nel glossario come documentazione del divieto, non come
+      funzionalità supportata.
+
+  football_data_org:
+    name: "football-data.org"
+    url: "https://www.football-data.org"
+    kind: "fixtures_and_results"
+    access: "API con chiave, piano gratuito limitato"
+    adapter: "openzone.ingest.football_data_org"
+    license: "termini del servizio, quota per piano"
+    license_status: declared
+    redistributable: false
+    scraping: "nessuno: API ufficiale"
+    coverage: "calendari, risultati, classifiche"
+    coordinates: "non applicabile"
+    notes: >
+      Serve a completare i metadati di partita (data, competizione, squadre) che
+      spesso mancano nei dataset di eventi. Richiede una chiave API in variabile
+      d'ambiente: OpenZone non la salva mai su disco.
+
+  datahub:
+    name: "DataHub (football dataset)"
+    url: "https://datahub.io"
+    kind: "match_results"
+    access: "bulk_download"
+    adapter: "openzone.ingest.datahub"
+    license: "da verificare per singolo dataset"
+    license_status: uncertain
+    redistributable: false
+    scraping: "nessuno"
+    coverage: "solo livello partita"
+    coordinates: "non applicabile"
+    notes: >
+      Storico di risultati utile per contestualizzare, senza eventi né coordinate.
+
+  opta_event_definitions:
+    name: "Opta Event Definitions"
+    url: "https://www.statsperform.com/opta-event-definitions/"
+    kind: "documentation"
+    access: "documento pubblico"
+    adapter: null
+    license: "documentazione del provider"
+    license_status: declared
+    redistributable: false
+    scraping: "non applicabile"
+    coverage: "definizioni di tipi evento e qualificatori Opta"
+    coordinates: "non applicabile"
+    notes: >
+      È la fonte primaria da cui completare openzone/glossary/opta_definitions.yaml.
+      Le voci già presenti in quel file sono parziali e marcate come non verificate.
+
+  sportmonks_glossary:
+    name: "Sportmonks Football API Glossary"
+    url: "https://www.sportmonks.com"
+    kind: "documentation"
+    access: "documentazione, parte dei contenuti a pagamento"
+    adapter: null
+    license: "termini del servizio"
+    license_status: declared
+    redistributable: false
+    scraping: "non applicabile"
+    coverage: "definizioni di metriche e tipi di evento"
+    coordinates: "non applicabile"
+    notes: >
+      Utile come seconda opinione quando una definizione Opta è ambigua.
+
+  sics_coverciano:
+    name: "SICS / Coverciano — IPO"
+    url: null
+    kind: "proprietary_metric"
+    access: "non pubblico"
+    adapter: null
+    license: "formula proprietaria"
+    license_status: proprietary
+    redistributable: false
+    scraping: "non applicabile"
+    coverage: "Indice di Pericolosità Offensiva"
+    coordinates: "non applicabile"
+    notes: >
+      La metrica IPO è proprietaria e la formula non è pubblica. OpenZone non la
+      calcola e non la ridistribuisce: può solo importare valori calcolati altrove da
+      chi ne ha i diritti.
+
+  karun_singh_xt:
+    name: "Karun Singh — Expected Threat"
+    url: "https://karun.in/blog/expected-threat.html"
+    kind: "methodology"
+    access: "articolo pubblico"
+    adapter: "openzone.metrics.predictive"
+    license: "metodologia pubblicata, codice originale con licenza del suo autore"
+    license_status: declared
+    redistributable: true
+    scraping: "non applicabile"
+    coverage: "definizione e griglia del modello xT"
+    coordinates: "griglia 12x8 nello schema originale"
+    notes: >
+      OpenZone reimplementa la metodologia in Python con codice proprio, non copia
+      l'implementazione originale. La griglia usata è un parametro esplicito e viene
+      salvata con i valori calcolati.
+
+  community_tracking:
+    name: "Community tracking data (Signality, SkillCorner open samples, ...)"
+    url: null
+    kind: "tracking_data"
+    access: "varia per provider e per campione"
+    adapter: null
+    license: "da verificare per singolo campione"
+    license_status: uncertain
+    redistributable: false
+    scraping: "non applicabile"
+    coverage: "posizioni dei giocatori ad alta frequenza"
+    coordinates: "dipende dal provider: normalizzare in fase di standardizzazione"
+    notes: >
+      Necessaria per packing e pitch control in versione piena. I campioni aperti
+      sono pochi e vanno trattati come dimostrazioni, non come base per analisi
+      storiche.
